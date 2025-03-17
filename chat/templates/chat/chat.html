@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #chat-box { width: 80%; height: 300px; border: 1px solid #ccc; overflow-y: scroll; margin: auto; padding: 10px; }
+        #message-input, #username-input { width: 70%; padding: 10px; }
+        #send-button, #set-username-button { padding: 10px; cursor: pointer; }
+        .system-message { color: gray; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h2>WebSocket Chat</h2>
+
+    <label for="username-input">Username:</label>
+    <input type="text" id="username-input" placeholder="Enter username..." />
+    <button id="set-username-button">Set Username</button>
+
+    <div id="chat-box"></div>
+    <input type="text" id="message-input" placeholder="Type a message..." />
+    <button id="send-button">Send</button>
+
+    <script>
+        const chatBox = document.getElementById("chat-box");
+        const messageInput = document.getElementById("message-input");
+        const sendButton = document.getElementById("send-button");
+        const usernameInput = document.getElementById("username-input");
+        const setUsernameButton = document.getElementById("set-username-button");
+
+        const socket = new WebSocket("ws://" + window.location.host + "/ws/chat/");
+        let username = "Guest";  // Default username
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const message = document.createElement("p");
+            message.textContent = data.message;
+            
+            if (data.system) {
+                message.classList.add("system-message");  // Style system messages
+            }
+
+            chatBox.appendChild(message);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        };
+
+        sendButton.onclick = function() {
+            const message = messageInput.value;
+            if (message.trim() !== "") {
+                socket.send(JSON.stringify({ "message": message }));
+                messageInput.value = "";
+            }
+        };
+
+        setUsernameButton.onclick = function() {
+            const newUsername = usernameInput.value.trim();
+            if (newUsername !== "") {
+                username = newUsername;
+                socket.send(JSON.stringify({ "username": username }));
+                usernameInput.value = "";
+            }
+        };
+
+        messageInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                sendButton.click();
+            }
+        });
+
+        usernameInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                setUsernameButton.click();
+            }
+        });
+    </script>
+</body>
+</html>
