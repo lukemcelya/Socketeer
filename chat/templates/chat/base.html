@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% load static %}
+        <meta charset="UTF-8">
+        <meta name="viewportt" content="width=device-width, initial-scale=1.0">
+
+        <!--Django title block-->
+        <title>{% block title %}Socketeer{% endblock %}</title>
+
+        <!--CSS link-->
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    </head>
+    <body>
+        <div class="container">
+
+            <!--Sidebar-->
+            <nav class="sidebar">
+                <h2>Socketeer</h2>
+                <ul>
+                    <!--Display a nav link for every room ('socket') a user is connected to-->
+                    {% for room in user_rooms %}
+                        <li><a href="{% url 'chat_room' room.name %}">{{ room.name }}</a></li>
+                    {% endfor %}
+                </ul>
+                <button onclick="">+ Create Room</button>
+                <button onclick="">Logout</button>
+            </nav>
+
+            <!--Chat Area-->
+            <main class="chat-area">
+                {% block content %}{% endblock %}
+            </main>
+
+            <!--Right Panel-->
+            <aside class="right-panel">
+                <h3>Room Info</h3>
+                <p>Active users: {{ active_users }}</p>
+            </aside>
+        </div>
+    </body>
+</html>
