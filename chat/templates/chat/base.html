@@ -5,38 +5,110 @@
         <meta charset="UTF-8">
         <meta name="viewportt" content="width=device-width, initial-scale=1.0">
 
-        <!--Django title block-->
         <title>{% block title %}Socketeer{% endblock %}</title>
-
-        <!--CSS link-->
         <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     </head>
     <body>
+        
         <div class="container">
-
-            <!--Sidebar-->
             <nav class="sidebar">
                 <h2>Socketeer</h2>
-                <ul>
-                    <!--Display a nav link for every room ('socket') a user is connected to-->
-                    {% for room in user_rooms %}
-                        <li><a href="{% url 'chat_room' room.name %}">{{ room.name }}</a></li>
+                <ul class="room-list">
+                    {% for r in rooms %}
+                        <li><a href="{% url 'chat_room' r.name %}">{{ r.name|title }}</a></li>
+                    {% empty %}
+                        <li>No rooms yet</li>
                     {% endfor %}
                 </ul>
-                <button onclick="">+ Create Room</button>
-                <button onclick="">Logout</button>
+                <button onclick="toggleModal()" clas="create-room-btn">+ Create Room</button>
+                <a href ="{% url 'logout' %}" style="color:white; display:block; margin-top:20px;">Logout</a>
             </nav>
-
-            <!--Chat Area-->
-            <main class="chat-area">
-                {% block content %}{% endblock %}
-            </main>
-
-            <!--Right Panel-->
-            <aside class="right-panel">
-                <h3>Room Info</h3>
-                <p>Active users: {{ active_users }}</p>
-            </aside>
+            <div class="chat-main">
+                <div class="chat-header">
+                    <h2>{{ room.name|title }}</h2>
+                </div>
+                <div id="chat-box">
+                    {% for message in messages %}
+                        <p><strong>{{ message.user }}</strong>: {{ message.text }}</p>
+                    {% empty %}
+                        <p>No messages yet. Start the conversation!</p>
+                    {% endfor %}
+                </div>
+                <form id="message-form">
+                    <input type="text" name="message" placeholder="Type your message..." autocomplete="off" required>
+                    <button type="submit">Send</button>
+                </form>
+            </div>
+            <div class="right-panel">
+                <h3>Active Users</h3>
+            </div>
         </div>
+    </div>
+    <div id="roomModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleModal()">&times;</span>
+            <h3>Create A New Room</h3>
+            <form method="post" action="{% url 'create_room' %}">
+                {% csrf_token %}
+                <input type="text" name="room_name" placeholder="Room name" required>
+                <button type="submit">Create</button>
+            </form>
+        </div> 
+    </div> 
+        <!-- Script to create new rooms -->
+        <script>
+            function toggleModal() {
+                const modal = document.getElementById('roomModal');
+                const isVisible = modal.style.display === 'flex';
+                modal.style.display = isVisible ? 'none' : 'flex';
+            }
+        
+            window.onclick = function(event) {
+                const modal = document.getElementById('roomModal');
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+    
+                const roomName = "{{ room.name }}";
+    
+                const chatSocket = new WebSocket(
+                    'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+                );
+    
+                chatSocket.onmessage = function(e) {
+                    const data = JSON.parse(e.data);
+                    const chatBox = document.getElementById('chat-box');
+                    const messageEl = document.createElement('div');
+                    messageEl.innerHTML = `<strong>${data.username}</strong>: ${data.message}`;
+                    chatBox.appendChild(messageEl);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                };
+    
+                chatSocket.onclose = function(e) {
+                    console.error('Chat socket closed unexpectedly');
+                };
+    
+                const form = document.getElementById('message-form');
+                const input = form.querySelector('input[name="message"]');
+    
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const message = input.value.trim();
+                    if (message.length > 0) {
+                        chatSocket.send(JSON.stringify({ message: message }));
+                        input.value = '';
+                    }
+                });
+            });
+        </script>
+        <script>
+            console.log("🔥 THIS SCRIPT IS RUNNING");
+        </script>
+        </body>
     </body>
+    
 </html>

@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "daphne",
+    "channels",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -64,6 +65,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "chat.context_processors.rooms_context",
             ],
         },
     },
@@ -134,3 +136,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CHAT_TEMPLATE = BASE_DIR / 'chat' / 'templates' / 'chat.html'
 
 DEFAULT_USERNAME = 'Guest' # If not logged in
+
+LOGIN_REDIRECT_URL = '/chat/general/'
+LOGOUT_REDIRECT_URL = '/'
