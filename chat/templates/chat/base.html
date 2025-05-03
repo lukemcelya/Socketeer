@@ -28,11 +28,15 @@
                     <h2>{{ room.name|title }}</h2>
                 </div>
                 <div id="chat-box">
-                    {% for message in messages %}
-                        <p><strong>{{ message.user }}</strong>: {{ message.text }}</p>
-                    {% empty %}
-                        <p>No messages yet. Start the conversation!</p>
-                    {% endfor %}
+                    <div id="messages">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <p><strong>{{ message.user }}</strong>: {{ message.text }}</p>
+                            {% endfor %}
+                        {% else %}
+                            <p id="no-messages">No messages yet. Start the conversation!</p>
+                        {% endif %}
+                    </div>
                 </div>
                 <form id="message-form">
                     <input type="text" name="message" placeholder="Type your message..." autocomplete="off" required>
@@ -41,6 +45,8 @@
             </div>
             <div class="right-panel">
                 <h3>Active Users</h3>
+                <ul id="active-users">
+                </ul>
             </div>
         </div>
     </div>
@@ -55,7 +61,6 @@
             </form>
         </div> 
     </div> 
-        <!-- Script to create new rooms -->
         <script>
             function toggleModal() {
                 const modal = document.getElementById('roomModal');
@@ -74,6 +79,8 @@
             document.addEventListener('DOMContentLoaded', () => {
     
                 const roomName = "{{ room.name }}";
+                const userList = document.getElementById('active-users');
+                userList.innerHTML = '';
     
                 const chatSocket = new WebSocket(
                     'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
@@ -81,11 +88,30 @@
     
                 chatSocket.onmessage = function(e) {
                     const data = JSON.parse(e.data);
+
+                    if (data.type === 'chat_message') {
                     const chatBox = document.getElementById('chat-box');
                     const messageEl = document.createElement('div');
                     messageEl.innerHTML = `<strong>${data.username}</strong>: ${data.message}`;
+                    const placeholder = document.getElementById('no-messages');
+                    if (placeholder) {
+                        placeholder.remove();
+                    }
                     chatBox.appendChild(messageEl);
                     chatBox.scrollTop = chatBox.scrollHeight;
+                    } else if (data.type === 'user_join') { // Update active user list
+                        if (!document.getElementById(`user-${data.username}`)) {
+                        const li = document.createElement('li');
+                        li.id = `user-${data.username}`;
+                        li.textContent = data.username;
+                        userList.appendChild(li);
+                        }
+                    } else if (data.type === 'user_leave') {
+                        const userEl = document.getElementById(`user-${data.username}`);
+                        if (userEl) {
+                            userEl.remove();
+                        }
+                    }
                 };
     
                 chatSocket.onclose = function(e) {
@@ -104,9 +130,6 @@
                     }
                 });
             });
-        </script>
-        <script>
-            console.log("🔥 THIS SCRIPT IS RUNNING");
         </script>
         </body>
     </body>
