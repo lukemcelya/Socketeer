@@ -14,3 +14,5 @@ To get started with this project, take these few steps:
 ##
         python manage.py runserver
 4. Locate your local host in web browser (127.0.0.1:8000)
+
+##### Created by Luke McElya, Arionna Fellows, Angel Contreras
